@@ -1,38 +1,31 @@
-name: mcp-security-guardian
+name: mcp-security-test
 version: "1.0.0"
-description: "MCP Security Guardian - Ultra-minimal MCP server"
+description: "Simple HTTP server test for Smithery"
 
-# Use default Dockerfile for simplicity
+# Use default Dockerfile
 build:
   context: "."
 
-# Minimal server configuration
+# Test with simple script
 server:
-  command: ["python3", "test_ultra_minimal.py"]
+  command: ["python", "app.py"]
   workdir: /app
 
-# Basic MCP metadata
-mcp:
-  name: "mcp-security-guardian"
-  version: "1.0.0"
-  capabilities:
-    tools: true
-
-# Ultra-minimal resources to prevent timeout
+# Minimal resources
 resources:
   memory: "64Mi"
   cpu: "0.1"
 
-# Simple networking
+# Basic networking
 networking:
-  port: 8000
+  port: 8080
 
-# Minimal tags
+# Simple tags
 tags:
-  - "mcp"
-  - "security"
+  - "test"
+  - "http"
 
-# Server configuration
+# Minimal server configuration
 server:
   # Basic test server (more reliable for deployment)
   command: ["python3", "test_mcp_basic.py"]

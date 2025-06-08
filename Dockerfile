@@ -2,11 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only MCP SDK
-RUN pip install --no-cache-dir mcp>=1.9.0
+# Copy and run a simple Python script
+COPY app.py .
 
-# Copy ultra-minimal server
-COPY test_ultra_minimal.py /app/
+# Expose port 8080
+EXPOSE 8080
 
-# Run the ultra-minimal server
-CMD ["python3", "test_ultra_minimal.py"] 
+# Run the application
+CMD ["python", "app.py"] 
