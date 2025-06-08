@@ -1,0 +1,302 @@
+version: '3.8'
+
+services:
+  # API Service
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-security-guardian:latest
+    container_name: mcp-security-guardian-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - neo4j
+    environment:
+      - MCP_ENVIRONMENT=production
+      - MCP_LOG_LEVEL=INFO
+      - MCP_API_HOST=0.0.0.0
+      - MCP_API_PORT=8000
+      - MCP_API_WORKERS=4
+      - MCP_POSTGRES_HOST=postgres
+      - MCP_POSTGRES_PORT=5432
+      - MCP_POSTGRES_USER=mcp_guardian
+      - MCP_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MCP_POSTGRES_DB=mcp_guardian
+      - MCP_MONGODB_URI=mongodb://mcp_guardian:${MONGODB_PASSWORD}@mongodb:27017/mcp_guardian
+      - MCP_REDIS_HOST=redis
+      - MCP_REDIS_PORT=6379
+      - MCP_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MCP_NEO4J_URI=bolt://neo4j:7687
+      - MCP_NEO4J_USER=neo4j
+      - MCP_NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - MCP_JWT_SECRET=${JWT_SECRET}
+      - MCP_JWT_ALGORITHM=HS256
+      - MCP_JWT_EXPIRES_MINUTES=60
+      - MCP_REFRESH_TOKEN_EXPIRES_DAYS=7
+      - MCP_PASSWORD_RESET_TOKEN_EXPIRES_HOURS=24
+      - MCP_INSTANCE_ID=${INSTANCE_ID:-default}
+      - MCP_API_CORS_ORIGINS=${API_CORS_ORIGINS:-*}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./data/patterns:/app/data/patterns
+      - ./data/models:/app/data/models
+      - ./logs:/app/logs
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Worker Service for background tasks
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-security-guardian:latest
+    container_name: mcp-security-guardian-worker
+    restart: unless-stopped
+    depends_on:
+      - api
+      - postgres
+      - mongodb
+      - redis
+      - neo4j
+    command: celery -A src.worker.celery worker --loglevel=info
+    environment:
+      - MCP_ENVIRONMENT=production
+      - MCP_LOG_LEVEL=INFO
+      - MCP_POSTGRES_HOST=postgres
+      - MCP_POSTGRES_PORT=5432
+      - MCP_POSTGRES_USER=mcp_guardian
+      - MCP_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MCP_POSTGRES_DB=mcp_guardian
+      - MCP_MONGODB_URI=mongodb://mcp_guardian:${MONGODB_PASSWORD}@mongodb:27017/mcp_guardian
+      - MCP_REDIS_HOST=redis
+      - MCP_REDIS_PORT=6379
+      - MCP_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MCP_NEO4J_URI=bolt://neo4j:7687
+      - MCP_NEO4J_USER=neo4j
+      - MCP_NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - MCP_CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
+      - MCP_CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/2
+      - MCP_INSTANCE_ID=${INSTANCE_ID:-worker}
+    volumes:
+      - ./data/patterns:/app/data/patterns
+      - ./data/models:/app/data/models
+      - ./logs:/app/logs
+    networks:
+      - mcp-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-security-guardian-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=mcp_guardian
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=mcp_guardian
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_guardian"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # MongoDB
+  mongodb:
+    image: mongo:6
+    container_name: mcp-security-guardian-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mcp_guardian
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+      - MONGO_INITDB_DATABASE=mcp_guardian
+    volumes:
+      - mongodb_data:/data/db
+      - ./init/mongodb:/docker-entrypoint-initdb.d
+    ports:
+      - "127.0.0.1:27017:27017"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/mcp_guardian --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-security-guardian-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Neo4j
+  neo4j:
+    image: neo4j:5
+    container_name: mcp-security-guardian-neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "wget", "-O", "/dev/null", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcp-security-guardian-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - mcp-network
+    depends_on:
+      - api
+      - worker
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mcp-security-guardian-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - mcp-network
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # NGINX for reverse proxy and SSL termination
+  nginx:
+    image: nginx:alpine
+    container_name: mcp-security-guardian-nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+      - ./static:/var/www/static
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - mcp-network
+    depends_on:
+      - api
+      - grafana
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+  prometheus_data:
+  grafana_data: 

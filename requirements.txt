@@ -1,0 +1,110 @@
+# Core FastAPI dependencies
+fastapi==0.103.1
+uvicorn[standard]==0.23.2
+pydantic==2.3.0
+pydantic-settings==2.0.3
+starlette==0.27.0
+gunicorn==21.2.0
+websockets==11.0.3
+httpx==0.25.0
+python-multipart==0.0.6
+email-validator==2.0.0
+
+# Security dependencies
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cryptography==41.0.3
+pyyaml==6.0.1
+bcrypt==4.0.1
+pytz==2023.3
+python-dotenv==1.0.0
+argon2-cffi==23.1.0
+
+# Database dependencies
+psycopg2-binary==2.9.7
+sqlalchemy==2.0.20
+sqlalchemy-utils==0.41.1
+alembic==1.12.0
+pymongo==4.5.0
+motor==3.2.0
+redis==5.0.0
+neo4j==5.12.0
+clickhouse-driver==0.2.6
+
+# Machine learning dependencies
+numpy==1.25.2
+scipy==1.11.2
+scikit-learn==1.3.0
+joblib==1.3.2
+transformers==4.32.1
+tokenizers==0.13.3
+torch==2.0.1
+sentence-transformers==2.2.2
+
+# Monitoring and observability
+prometheus-client==0.17.1
+opentelemetry-api==1.19.0
+opentelemetry-sdk==1.19.0
+opentelemetry-instrumentation-fastapi==0.40b0
+pythonjsonlogger==2.0.7
+statsd==4.0.1
+psutil==5.9.5
+
+# Background tasks and scheduling
+celery==5.3.4
+flower==2.0.1
+croniter==1.4.1
+arq==0.25.0
+
+# Utilities
+ujson==5.8.0
+orjson==3.9.5
+aiofiles==23.2.1
+tqdm==4.66.1
+tenacity==8.2.3
+python-dateutil==2.8.2
+pyhocon==0.3.60
+dynaconf==3.2.2
+minio==7.1.17
+black==23.7.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.5.1
+pytest==7.4.1
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Pattern matching and NLP
+yara-python==4.3.1
+regex==2023.8.8
+spacy==3.6.1
+nltk==3.8.1
+textstat==0.7.3
+symspellpy==6.7.7
+
+# API gateways and proxies
+aiohttp==3.8.5
+aiokafka==0.8.1
+jinja2==3.1.2
+python-slugify==8.0.1
+itsdangerous==2.1.2
+
+# Message queue and event processing
+aio-pika>=9.2.0
+
+# Threat intelligence
+stix2>=3.0.1
+taxii2-client>=2.3.0
+
+# Vulnerability scanning
+sslyze>=5.1.3
+safety>=2.3.5
+
+# Sandbox testing
+tempfile>=0.1.0
+pytest-sandbox>=0.5.2
+
+# DevOps
+docker>=6.1.3
+kubernetes>=28.1.0 
