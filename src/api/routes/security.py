@@ -21,7 +21,7 @@ from datetime import datetime
 import json
 import asyncio
 import time
-import redis
+import redis.asyncio as redis
 
 from src.core.config import Settings, get_settings
 from src.core.auth import verify_jwt, get_current_user
@@ -153,7 +153,13 @@ async def analyze_instruction(
     
     # Apply rate limiting based on client IP and user ID
     rate_key = f"rate:analyze:{client_ip}:{current_user.get('id', 'anonymous')}"
-    if await rate_limiter.is_rate_limited(redis_client, rate_key, max_requests=100, window_seconds=60):
+    allowed, _ = await rate_limiter.check_rate_limit(
+        redis_client,
+        rate_key,
+        max_requests=100,
+        window_seconds=60,
+    )
+    if not allowed:
         logger.warning(
             f"Rate limit exceeded for instruction analysis",
             extra={
@@ -269,7 +275,13 @@ async def scan_vulnerabilities(
     
     # Apply rate limiting based on client IP and user ID (stricter limits for scans)
     rate_key = f"rate:scan:{client_ip}:{current_user.get('id', 'anonymous')}"
-    if await rate_limiter.is_rate_limited(redis_client, rate_key, max_requests=10, window_seconds=600):
+    allowed, _ = await rate_limiter.check_rate_limit(
+        redis_client,
+        rate_key,
+        max_requests=10,
+        window_seconds=600,
+    )
+    if not allowed:
         logger.warning(
             f"Rate limit exceeded for vulnerability scan",
             extra={
@@ -454,7 +466,13 @@ async def revoke_token(
     
     # Apply rate limiting based on client IP and user ID (strict limits for token revocation)
     rate_key = f"rate:revoke:{client_ip}:{current_user.get('id', 'anonymous')}"
-    if await rate_limiter.is_rate_limited(redis_client, rate_key, max_requests=5, window_seconds=60):
+    allowed, _ = await rate_limiter.check_rate_limit(
+        redis_client,
+        rate_key,
+        max_requests=5,
+        window_seconds=60,
+    )
+    if not allowed:
         logger.warning(
             f"Rate limit exceeded for token revocation",
             extra={

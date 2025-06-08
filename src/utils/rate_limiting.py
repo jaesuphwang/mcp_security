@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Optional
 
-import redis
+import redis.asyncio as redis
 
 logger = logging.getLogger("mcp_security.utils.rate_limiting")
 
@@ -25,66 +25,69 @@ class RateLimiter:
         key: str,
         max_requests: int = 100,
         window_seconds: int = 60,
-        cost: int = 1
+        cost: int = 1,
     ) -> bool:
-        """
-        Check if a request should be rate limited.
-        
-        Args:
-            redis_client: Redis client instance
-            key: Rate limiting key (e.g., "rate:ip:192.168.1.1")
-            max_requests: Maximum number of requests allowed in the window
-            window_seconds: Time window in seconds
-            cost: Cost of the current request (default: 1)
-            
-        Returns:
-            bool: True if the request should be rate limited, False otherwise
+        """Return ``True`` if the request should be rate limited."""
+
+        allowed, _ = await RateLimiter.check_rate_limit(
+            redis_client,
+            key,
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+            cost=cost,
+        )
+        return not allowed
+
+    @staticmethod
+    async def check_rate_limit(
+        redis_client: redis.Redis,
+        key: str,
+        max_requests: int = 100,
+        window_seconds: int = 60,
+        cost: int = 1,
+    ) -> tuple:
+        """Atomically check and update rate limit for a key.
+
+        Returns a tuple of (allowed, info dict).
         """
         now = time.time()
         window_start = now - window_seconds
-        
+
         try:
-            # Get the rate limiting pipeline
             async with redis_client.pipeline(transaction=True) as pipe:
-                # Remove requests older than the window
                 await pipe.zremrangebyscore(key, 0, window_start)
-                
-                # Count requests in the current window
                 await pipe.zcard(key)
-                
-                # Add current request with timestamp as score
                 await pipe.zadd(key, {f"{now}:{cost}": now})
-                
-                # Set expiration for the key
                 await pipe.expire(key, window_seconds * 2)
-                
-                # Execute pipeline
                 _, current_count, _, _ = await pipe.execute()
-                
-                # Check if rate limit is exceeded
-                is_limited = current_count > max_requests
-                
-                if is_limited:
-                    logger.warning(
-                        f"Rate limit exceeded for key: {key}",
-                        extra={
-                            "key": key,
-                            "current_count": current_count,
-                            "max_requests": max_requests,
-                            "window_seconds": window_seconds
-                        }
-                    )
-                
-                return is_limited
-                
+
+            current_count += cost
+            remaining = max(0, max_requests - current_count)
+            allowed = current_count <= max_requests
+
+            retry_after = None
+            if not allowed:
+                oldest = await redis_client.zrange(key, 0, 0, withscores=True)
+                oldest_ts = oldest[0][1] if oldest else now
+                retry_after = max(0, window_seconds - (now - oldest_ts))
+
+            return allowed, {
+                "limit": max_requests,
+                "remaining": remaining,
+                "retry_after": retry_after,
+            }
+
         except Exception as e:
-            # In case of Redis errors, log and don't rate limit
             logger.error(
-                f"Error in rate limiting: {str(e)}",
+                f"Error checking rate limit: {str(e)}",
                 extra={"key": key, "error": str(e)},
-                exc_info=True
+                exc_info=True,
             )
-            return False
+            return True, {
+                "limit": max_requests,
+                "remaining": max_requests,
+                "error": str(e),
+            }
     
     @staticmethod
     async def get_remaining_requests(
