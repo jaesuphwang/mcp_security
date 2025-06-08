@@ -2,6 +2,7 @@
 """
 Basic MCP Security Guardian Server Test
 A minimal test to verify MCP server functionality without complex dependencies.
+Self-contained version for deployment.
 """
 
 import asyncio
@@ -12,28 +13,47 @@ import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-# Add src directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp import (
-    McpError,
-    Resource,
-    Tool,
-)
-from mcp.types import (
-    TextContent,
-    ListResourcesResult,
-    ReadResourceResult,
-    INVALID_PARAMS,
-    INTERNAL_ERROR,
-    METHOD_NOT_FOUND,
-)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from mcp.server import Server
+    from mcp.server.models import InitializationOptions
+    from mcp import (
+        McpError,
+        Resource,
+        Tool,
+    )
+    from mcp.types import (
+        TextContent,
+        ListResourcesResult,
+        ReadResourceResult,
+        INVALID_PARAMS,
+        INTERNAL_ERROR,
+        METHOD_NOT_FOUND,
+    )
+except ImportError as e:
+    logger.error(f"MCP import error: {e}")
+    logger.info("Installing MCP SDK...")
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "mcp>=1.9.0"])
+    # Retry import
+    from mcp.server import Server
+    from mcp.server.models import InitializationOptions
+    from mcp import (
+        McpError,
+        Resource,
+        Tool,
+    )
+    from mcp.types import (
+        TextContent,
+        ListResourcesResult,
+        ReadResourceResult,
+        INVALID_PARAMS,
+        INTERNAL_ERROR,
+        METHOD_NOT_FOUND,
+    )
 
 
 class BasicMCPSecurityServer:
@@ -140,6 +160,8 @@ class BasicMCPSecurityServer:
     async def run(self):
         """Run the MCP server"""
         logger.info("Starting Basic MCP Security Guardian Server...")
+        logger.info("MCP Security Guardian v1.0.0 - Basic Test Server")
+        logger.info("Ready for Smithery deployment")
         
         # Start the server
         logger.info("Basic MCP Security Guardian Server is running")
@@ -158,6 +180,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
+        logger.info("MCP Security Guardian - Starting deployment test...")
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")

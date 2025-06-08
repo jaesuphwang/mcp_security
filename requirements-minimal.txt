@@ -1,0 +1,18 @@
+# Minimal requirements for MCP Security Guardian - Smithery deployment
+# Core MCP functionality only
+
+# MCP (Model Context Protocol) SDK
+mcp>=1.9.0
+
+# Core async support
+asyncio-mqtt>=0.13.0
+
+# Basic utilities
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Logging
+python-json-logger>=2.0.7
+
+# Optional: Basic security patterns
+regex>=2023.8.8 

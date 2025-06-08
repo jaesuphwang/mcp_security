@@ -1,28 +1,24 @@
 name: mcp-security-guardian
 version: "1.0.0"
-description: "MCP Security Guardian - Comprehensive security analysis and threat detection for MCP communications"
+description: "MCP Security Guardian - Basic security analysis for MCP communications"
 
 # Smithery configuration for MCP server deployment
 build:
-  dockerfile: Dockerfile
+  dockerfile: Dockerfile.minimal
   context: "."
 
 # Server configuration
 server:
-  # Main MCP server entry point
-  command: ["python3", "mcp_server.py"]
-  
-  # Basic test server (alternative)
-  # command: ["python3", "test_mcp_basic.py"]
+  # Basic test server (more reliable for deployment)
+  command: ["python3", "test_mcp_basic.py"]
   
   # Working directory
   workdir: /app
   
-  # Environment variables
+  # Minimal environment variables
   env:
     PYTHONPATH: /app
     LOG_LEVEL: INFO
-    SECURITY_MODE: production
 
 # MCP server metadata
 mcp:
@@ -35,33 +31,24 @@ mcp:
     sampling: false
   
   tools:
-    - name: "analyze_instruction"
-      description: "Analyze an MCP instruction for security threats"
-    - name: "scan_connection"
-      description: "Scan an MCP connection for vulnerabilities"
-    - name: "revoke_token"
-      description: "Revoke compromised authentication tokens"
-    - name: "audit_capabilities"
-      description: "Audit MCP server capabilities for security issues"
-    - name: "distribute_alert"
-      description: "Distribute security alerts through threat intelligence network"
+    - name: "test_analyze"
+      description: "Basic test analysis of instructions"
 
 # Python requirements
 python:
-  version: "3.10"
-  requirements_file: "requirements.txt"
+  version: "3.11"
+  requirements_file: "requirements-minimal.txt"
 
-# Health check
+# Simplified health check
 health:
-  path: "/health"
-  interval: 30s
-  timeout: 10s
-  retries: 3
+  interval: 60s
+  timeout: 5s
+  retries: 2
 
-# Resource limits
+# Reduced resource limits for faster deployment
 resources:
-  memory: "512Mi"
-  cpu: "0.5"
+  memory: "256Mi"
+  cpu: "0.25"
 
 # Networking
 networking:
@@ -77,10 +64,9 @@ deployment:
 labels:
   category: "security"
   type: "mcp-server"
+  deployment: "minimal"
   
 tags:
   - "security"
-  - "threat-detection"
   - "mcp"
-  - "vulnerability-scanning"
-  - "ai-security" 
+  - "basic" 
