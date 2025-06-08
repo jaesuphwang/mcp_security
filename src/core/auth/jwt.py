@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional, Union, Any, List, Tuple
 
 import jwt
-import redis
+import redis.asyncio as redis
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import PyJWTError, InvalidTokenError, ExpiredSignatureError
