@@ -28,7 +28,9 @@ from enum import Enum, auto
 
 import httpx
 from core.utils.logging import get_logger
-from core.config.settings import settings
+from core.config.settings import get_settings
+
+settings = get_settings()
 from core.database.connections import get_db
 
 logger = get_logger(__name__)

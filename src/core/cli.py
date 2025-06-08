@@ -21,7 +21,9 @@ import typer
 import uvicorn
 from typing import Optional
 
-from core.config.settings import settings
+from core.config.settings import get_settings
+
+settings = get_settings()
 from core.utils.logging import logger, get_logger
 
 # Create CLI app

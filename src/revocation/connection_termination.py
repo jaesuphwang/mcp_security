@@ -27,7 +27,9 @@ from enum import Enum, auto
 
 import httpx
 from core.utils.logging import get_logger
-from core.config.settings import settings
+from core.config.settings import get_settings
+
+settings = get_settings()
 from revocation.token_revocation import RevocationReason, RevocationPriority
 
 logger = get_logger(__name__)

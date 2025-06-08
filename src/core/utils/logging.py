@@ -6,7 +6,9 @@ import sys
 import os
 from typing import Any, Dict, Optional
 
-from core.config.settings import settings
+from core.config.settings import get_settings
+
+settings = get_settings()
 
 
 def configure_logging() -> None:

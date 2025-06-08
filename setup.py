@@ -17,9 +17,12 @@ from setuptools import setup, find_packages
 with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
+# Filter out any lines that start with # or are empty
+requirements = [req for req in requirements if req and not req.startswith("#")]
+
 setup(
-    name="MCP_SECURITY",
-    version="0.1.0",
+    name="mcp-security-guardian",
+    version="1.0.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=requirements,
@@ -27,31 +30,54 @@ setup(
     author_email="jaesuphwang@gmail.com",
     maintainer="Jae Sup Hwang",
     maintainer_email="jaesuphwang@gmail.com",
-    description="MCP Security Guardian Tool - A comprehensive security solution for the Model Context Protocol ecosystem",
+    description="MCP Security Guardian - A comprehensive security solution for the Model Context Protocol ecosystem",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     license="Apache 2.0",
+    url="https://github.com/jaesuphwang/mcp_security",
+    project_urls={
+        "Bug Tracker": "https://github.com/jaesuphwang/mcp_security/issues",
+        "Documentation": "https://github.com/jaesuphwang/mcp_security/wiki",
+        "Source Code": "https://github.com/jaesuphwang/mcp_security",
+    },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Information Technology",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Security",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+        "Operating System :: OS Independent",
     ],
     python_requires=">=3.10",
     entry_points={
         "console_scripts": [
-            "mcp-security=core.cli:main",
-            "mcp-security-ws=api.websocket_server:run_server",
-            "mcp-security-simple-ws=api.simple_ws_server:main",
+            "mcp-security-guardian=mcp_server:main",
+            "mcp-security-basic=test_mcp_basic:main",
         ],
     },
     package_data={
-        "detection_engine": ["data/*"],
-        "vulnerability_scanning": ["data/*"],
-        "revocation": ["data/*"],
-        "alerting": ["data/*"],
+        "detection_engine": ["data/*", "*.json", "*.yml"],
+        "vulnerability_scanning": ["data/*", "*.json", "*.yml"],
+        "revocation": ["data/*", "*.json", "*.yml"],
+        "alerting": ["data/*", "*.json", "*.yml"],
+        "core": ["*.json", "*.yml"],
     },
+    include_package_data=True,
+    keywords=[
+        "mcp",
+        "security",
+        "threat-detection",
+        "vulnerability-scanning", 
+        "model-context-protocol",
+        "ai-security",
+        "cybersecurity",
+        "token-management",
+        "threat-intelligence",
+    ],
 ) 

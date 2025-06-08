@@ -26,7 +26,9 @@ from langchain.schema import SystemMessage, HumanMessage
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from langchain_community.chat_models import ChatOpenAI, ChatAnthropic
 
-from core.config.settings import settings
+from core.config.settings import get_settings
+
+settings = get_settings()
 from core.utils.logging import get_logger
 from detection_engine.instruction_analysis.models import ThreatType, RiskLevel, AnalysisResult
 from detection_engine.llm_classifier.models import (

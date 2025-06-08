@@ -1,3 +1,6 @@
+# MCP (Model Context Protocol) SDK
+mcp>=1.9.0
+
 # Core FastAPI dependencies
 fastapi==0.103.1
 uvicorn[standard]==0.23.2
