@@ -1,0 +1,86 @@
+name: mcp-security-guardian
+version: "1.0.0"
+description: "MCP Security Guardian - Comprehensive security analysis and threat detection for MCP communications"
+
+# Smithery configuration for MCP server deployment
+build:
+  dockerfile: Dockerfile
+  context: "."
+
+# Server configuration
+server:
+  # Main MCP server entry point
+  command: ["python3", "mcp_server.py"]
+  
+  # Basic test server (alternative)
+  # command: ["python3", "test_mcp_basic.py"]
+  
+  # Working directory
+  workdir: /app
+  
+  # Environment variables
+  env:
+    PYTHONPATH: /app
+    LOG_LEVEL: INFO
+    SECURITY_MODE: production
+
+# MCP server metadata
+mcp:
+  name: "mcp-security-guardian"
+  version: "1.0.0"
+  capabilities:
+    resources: true
+    tools: true
+    prompts: false
+    sampling: false
+  
+  tools:
+    - name: "analyze_instruction"
+      description: "Analyze an MCP instruction for security threats"
+    - name: "scan_connection"
+      description: "Scan an MCP connection for vulnerabilities"
+    - name: "revoke_token"
+      description: "Revoke compromised authentication tokens"
+    - name: "audit_capabilities"
+      description: "Audit MCP server capabilities for security issues"
+    - name: "distribute_alert"
+      description: "Distribute security alerts through threat intelligence network"
+
+# Python requirements
+python:
+  version: "3.10"
+  requirements_file: "requirements.txt"
+
+# Health check
+health:
+  path: "/health"
+  interval: 30s
+  timeout: 10s
+  retries: 3
+
+# Resource limits
+resources:
+  memory: "512Mi"
+  cpu: "0.5"
+
+# Networking
+networking:
+  port: 8000
+  protocol: "tcp"
+
+# Deployment settings
+deployment:
+  replicas: 1
+  strategy: "RollingUpdate"
+  
+# Labels and tags
+labels:
+  category: "security"
+  type: "mcp-server"
+  
+tags:
+  - "security"
+  - "threat-detection"
+  - "mcp"
+  - "vulnerability-scanning"
+  - "ai-security" 

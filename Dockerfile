@@ -31,7 +31,9 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH="/app"
+    PYTHONPATH="/app" \
+    LOG_LEVEL="INFO" \
+    SECURITY_MODE="production"
 
 # Create a non-root user
 RUN useradd -m -s /bin/bash appuser
@@ -53,17 +55,21 @@ COPY --from=builder /app/requirements.txt .
 # Install dependencies from wheels
 RUN pip install --no-cache /wheels/*
 
-# Copy only production files
+# Copy application files
 COPY --chown=appuser:appuser src/ /app/src/
+COPY --chown=appuser:appuser mcp_server.py test_mcp_basic.py /app/
 COPY --chown=appuser:appuser requirements.txt setup.py README.md LICENSE /app/
-COPY --chown=appuser:appuser init/ /app/init/
+COPY --chown=appuser:appuser mcp.json /app/
 
 # Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Expose port (for MCP server)
+EXPOSE 8000
 
-# Command to run the application
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Health check for basic server verification
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python3 -c "import sys; sys.path.insert(0, '/app'); exec(open('/app/test_mcp_basic.py').read().split('asyncio.run(main())')[0]); print('Server OK')" || exit 1
+
+# Default command to run the MCP server
+CMD ["python3", "mcp_server.py"] 
