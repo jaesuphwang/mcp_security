@@ -1,0 +1,2 @@
+# Ultra-minimal requirements - only MCP SDK
+mcp>=1.9.0 

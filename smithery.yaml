@@ -1,11 +1,36 @@
 name: mcp-security-guardian
 version: "1.0.0"
-description: "MCP Security Guardian - Basic security analysis for MCP communications"
+description: "MCP Security Guardian - Ultra-minimal MCP server"
 
-# Smithery configuration for MCP server deployment
+# Use default Dockerfile for simplicity
 build:
-  dockerfile: Dockerfile.minimal
   context: "."
+
+# Minimal server configuration
+server:
+  command: ["python3", "test_ultra_minimal.py"]
+  workdir: /app
+
+# Basic MCP metadata
+mcp:
+  name: "mcp-security-guardian"
+  version: "1.0.0"
+  capabilities:
+    tools: true
+
+# Ultra-minimal resources to prevent timeout
+resources:
+  memory: "64Mi"
+  cpu: "0.1"
+
+# Simple networking
+networking:
+  port: 8000
+
+# Minimal tags
+tags:
+  - "mcp"
+  - "security"
 
 # Server configuration
 server:
@@ -45,21 +70,6 @@ health:
   timeout: 5s
   retries: 2
 
-# Reduced resource limits for faster deployment
-resources:
-  memory: "256Mi"
-  cpu: "0.25"
-
-# Networking
-networking:
-  port: 8000
-  protocol: "tcp"
-
-# Deployment settings
-deployment:
-  replicas: 1
-  strategy: "RollingUpdate"
-  
 # Labels and tags
 labels:
   category: "security"
