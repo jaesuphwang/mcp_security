@@ -1,6 +1,10 @@
-"""
-Rate limiting utility for the MCP Security Guardian API.
-Provides flexible rate limiting based on keys with Redis backend.
+"""Utilities for rate limiting API requests using Redis.
+
+This module implements a sliding window algorithm to limit requests on a per-key
+basis. It exposes helpers to register requests, query remaining quota and
+retrieve detailed limit information.  A convenience function,
+``check_rate_limit``, combines these helpers and returns both an ``allowed``
+flag and a structured info dictionary.
 """
 import logging
 import time
@@ -226,4 +230,60 @@ class RateLimiter:
                 "reset_after": 0,
                 "is_limited": False,
                 "error": str(e)
-            } 
+            }
+
+    @staticmethod
+    async def check_rate_limit(
+        redis_client: Optional[redis.Redis],
+        key: str,
+        max_requests: int = 100,
+        window_seconds: int = 60,
+        cost: int = 1,
+    ) -> tuple[bool, dict]:
+        """Check if a request is allowed and return rate limit information.
+
+        This helper calls :meth:`is_rate_limited` to register the request and
+        determines if the caller has exceeded the allotted quota. It then uses
+        :meth:`get_remaining_requests` to report how many requests are left in
+        the current window.
+
+        Args:
+            redis_client: Redis client instance. If ``None``, the request is
+                automatically allowed and an empty info dictionary is returned.
+            key: Rate limiting key.
+            max_requests: Maximum number of requests allowed in the window.
+            window_seconds: Duration of the sliding window in seconds.
+            cost: Cost of the current request.
+
+        Returns:
+            Tuple[bool, dict]: ``True`` if the request is allowed. The info
+            dictionary contains at least ``limit`` and ``remaining``. When the
+            request is blocked ``retry_after`` gives a rough time until new
+            requests may be allowed.
+        """
+
+        if redis_client is None:
+            # Without a backend we cannot track limits; allow the request.
+            return True, {"limit": max_requests, "remaining": max_requests}
+
+        limited = await RateLimiter.is_rate_limited(
+            redis_client,
+            key,
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+            cost=cost,
+        )
+
+        remaining = await RateLimiter.get_remaining_requests(
+            redis_client,
+            key,
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+        )
+
+        info = {"limit": max_requests, "remaining": remaining}
+
+        if limited:
+            info["retry_after"] = window_seconds
+
+        return (not limited, info)
