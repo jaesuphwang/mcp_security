@@ -370,9 +370,10 @@ pip install -r requirements.txt --force-reinstall
 ## 🚨 Security Considerations
 
 1. **Keep dependencies updated** - Run `pip install -U -r requirements.txt` regularly
-2. **Monitor security alerts** - Check logs for suspicious patterns  
+2. **Monitor security alerts** - Check logs for suspicious patterns
 3. **Audit configurations** - Review MCP server settings periodically
 4. **Test security features** - Run security tests before deployment
+5. **Use strong secrets in production** - Copy `.env.production.template` to `.env` and replace values such as `JWT_SECRET` and `POSTGRES_PASSWORD` with secure random strings (`openssl rand -hex 64`)
 
 ## 📄 License
 
