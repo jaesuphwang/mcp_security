@@ -17,6 +17,7 @@ Configuration settings for the MCP Security Guardian Tool.
 """
 import os
 import secrets
+import warnings
 from functools import lru_cache
 from typing import Dict, List, Optional, Union, Any
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -325,7 +326,7 @@ class Settings(BaseSettings):
         description="Secret key for JWT tokens"
     )
     JWT_ALGORITHM: str = Field(
-        default="HS256",
+        default="RS256",
         description="Algorithm for JWT tokens"
     )
     JWT_EXPIRES_MINUTES: int = Field(
@@ -551,35 +552,50 @@ class Settings(BaseSettings):
         Returns:
             List[str]: List of warnings
         """
-        warnings = []
+        warnings_list = []
         
         if self.ENVIRONMENT == "production":
             # Check for default/insecure values in production
             if self.SECRET_KEY == "insecure-secret-key-change-in-production":
-                warnings.append("Using default SECRET_KEY in production")
+                msg = "Using default SECRET_KEY in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if self.JWT_SECRET == "insecure-jwt-secret-change-in-production":
-                warnings.append("Using default JWT_SECRET in production")
+                msg = "Using default JWT_SECRET in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if self.POSTGRES_PASSWORD == "postgres" and not self.DEBUG:
-                warnings.append("Using default database password in production")
+                msg = "Using default database password in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if self.NEO4J_PASSWORD == "password" and not self.DEBUG:
-                warnings.append("Using default Neo4j password in production")
+                msg = "Using default Neo4j password in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if not self.POSTGRES_SSL:
-                warnings.append("PostgreSQL SSL is disabled in production")
+                msg = "PostgreSQL SSL is disabled in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if not self.REDIS_SSL and self.REDIS_PASSWORD:
-                warnings.append("Redis SSL is disabled but password is set in production")
+                msg = "Redis SSL is disabled but password is set in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if self.API_CORS_ORIGINS == ["http://localhost:3000", "http://localhost:8000"]:
-                warnings.append("Using default CORS origins in production")
+                msg = "Using default CORS origins in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
                 
             if self.DEBUG:
-                warnings.append("DEBUG mode is enabled in production")
-                
-        return warnings
+                msg = "DEBUG mode is enabled in production"
+                warnings.warn(msg)
+                warnings_list.append(msg)
+        return warnings_list
 
 
 @lru_cache
