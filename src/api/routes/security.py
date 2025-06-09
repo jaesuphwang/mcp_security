@@ -483,11 +483,9 @@ async def revoke_token(
         with ErrorContext("token_revocation", trace_id=trace_id, token=request.token[:10] + "..."):
             background_tasks.add_task(
                 token_revocation_service.revoke_token,
-                token_id=request.token,  # Using 'token' field from SecureTokenRevocation
+                token=request.token,
                 reason=request.reason,
-                user_id=current_user.get("id"),
-                details={"priority": request.priority},  # Include priority from secure model
-                trace_id=trace_id
+                revoked_by=current_user.get("id")
             )
         
         # Return response immediately
@@ -551,31 +549,7 @@ async def get_token_revocation(
                 detail=f"Token revocation not found: {revocation_id}"
             )
         
-        # Check if user has access to this revocation
-        revocation_user_id = getattr(revocation, "user_id", None)
-        revocation_org_id = getattr(revocation, "organization_id", None)
-        
-        if (
-            not current_user.get("role") == "admin" and
-            revocation_user_id and revocation_user_id != current_user.get("id") and
-            revocation_org_id and revocation_org_id != current_user.get("organization_id")
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to access this token revocation"
-            )
-        
-        # Convert to response model
-        response = TokenRevocationResponse(
-            revocation_id=revocation.revocation_id,
-            token_id=revocation.token_id,
-            timestamp=revocation.revoked_at.isoformat(),
-            status=revocation.status,
-            success=revocation.status == "completed",
-            message=revocation.message
-        )
-        
-        return response
+        return revocation
         
     except HTTPException:
         raise
