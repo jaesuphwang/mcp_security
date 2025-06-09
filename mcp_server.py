@@ -318,7 +318,7 @@ class MCPSecurityServer:
         revocation_id = await self.revocation_service.revoke_token(
             token=token,
             reason=reason,
-            description=description
+            revoked_by="system"
         )
         
         # Distribute revocation alert (simplified for basic implementation)
@@ -333,7 +333,7 @@ class MCPSecurityServer:
         
         return {
             "revocation_id": revocation_id,
-            "token_hash": self.revocation_service._hash_token(token),
+            "token": token,
             "reason": reason,
             "status": "revoked",
             "timestamp": datetime.utcnow().isoformat()
