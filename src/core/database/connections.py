@@ -19,8 +19,8 @@ import logging
 import time
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional, List, Callable, TypeVar
-import redis
-from redis.sentinel import Sentinel
+import redis.asyncio as redis
+from redis.asyncio.sentinel import Sentinel
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.ext.declarative import declarative_base
@@ -200,8 +200,7 @@ def get_redis() -> redis.Redis:
     Returns:
         redis.Redis: A Redis client.
     """
-    # Verify connection is healthy
-    redis_client.ping()
+    # Connection health will be checked on first use for asyncio client
     return redis_client
 
 
